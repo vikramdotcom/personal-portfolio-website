@@ -22,6 +22,7 @@ const POINT_VERT = /* glsl */ `
   uniform float uTime;
   uniform vec2 uPointer;
   uniform float uSize;
+  uniform float uOpacity;
 
   varying vec3 vColor;
   varying float vAlpha;
@@ -52,7 +53,7 @@ const POINT_VERT = /* glsl */ `
     vColor = col;
 
     // Fade with depth so the sphere reads as a volume, not a flat disc
-    vAlpha = smoothstep(7.2, 3.6, dist) * (0.35 + random.w * 0.65);
+    vAlpha = smoothstep(7.2, 3.6, dist) * (0.35 + random.w * 0.65) * uOpacity;
   }
 `;
 
@@ -95,11 +96,38 @@ const LINE_FRAG = /* glsl */ `
   varying float vDepth;
 
   void main() {
-    gl_FragColor = vec4(uColor, smoothstep(7.5, 3.8, vDepth) * 0.28);
+    gl_FragColor = vec4(uColor, smoothstep(7.5, 3.8, vDepth) * 0.2);
   }
 `;
 
-export default function ParticleField() {
+export type SceneVariant = "hero" | "ambient";
+
+/**
+ * `hero` is the full scene; `ambient` is the same code path dialled down for
+ * use as a page backdrop. Both share one lazy chunk, so a second variant on
+ * another route costs no extra download.
+ */
+const VARIANTS = {
+  hero: {
+    count: { wide: 3600, narrow: 1400 },
+    // Scaled by DPR at init; resolves to ~2-3 CSS px dots
+    size: { wide: 22, narrow: 16 },
+    torus: true,
+    opacity: 1,
+  },
+  ambient: {
+    count: { wide: 1700, narrow: 800 },
+    size: { wide: 16, narrow: 12 },
+    torus: false,
+    opacity: 0.5,
+  },
+} as const;
+
+export default function ParticleField({
+  variant = "hero",
+}: {
+  variant?: SceneVariant;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -138,8 +166,9 @@ export default function ParticleField() {
     const scene = new Transform();
 
     // Fewer points on phones: fill rate, not vertex count, is the limit there
+    const cfg = VARIANTS[variant];
     const isNarrow = window.innerWidth < 768;
-    const count = isNarrow ? 1400 : 3600;
+    const count = isNarrow ? cfg.count.narrow : cfg.count.wide;
     const radius = 1.75;
 
     const positions = new Float32Array(count * 3);
@@ -172,7 +201,8 @@ export default function ParticleField() {
       uniforms: {
         uTime: { value: 0 },
         uPointer: { value: [0, 0] },
-        uSize: { value: isNarrow ? 190 : 260 },
+        uSize: { value: (isNarrow ? cfg.size.narrow : cfg.size.wide) * renderer.dpr },
+        uOpacity: { value: cfg.opacity },
       },
       transparent: true,
       depthTest: false,
@@ -191,31 +221,35 @@ export default function ParticleField() {
 
     // Drawing an indexed mesh as LINES is a cheap way to get a structural
     // "orbit" wireframe with no extra geometry work.
-    const torusGeometry = new Torus(gl, {
-      radius: 2.55,
-      tube: 0.42,
-      radialSegments: 20,
-      tubularSegments: 56,
-    });
+    let torus: Mesh | null = null;
 
-    const torusProgram = new Program(gl, {
-      vertex: LINE_VERT,
-      fragment: LINE_FRAG,
-      uniforms: { uColor: { value: [0.494, 0.361, 1.0] } },
-      transparent: true,
-      depthTest: false,
-      depthWrite: false,
-      cullFace: false,
-    });
-    torusProgram.setBlendFunc(gl.SRC_ALPHA, gl.ONE);
+    if (cfg.torus) {
+      const torusGeometry = new Torus(gl, {
+        radius: 2.55,
+        tube: 0.42,
+        radialSegments: 20,
+        tubularSegments: 56,
+      });
 
-    const torus = new Mesh(gl, {
-      mode: gl.LINES,
-      geometry: torusGeometry,
-      program: torusProgram,
-    });
-    torus.rotation.x = 1.15;
-    torus.setParent(scene);
+      const torusProgram = new Program(gl, {
+        vertex: LINE_VERT,
+        fragment: LINE_FRAG,
+        uniforms: { uColor: { value: [0.494, 0.361, 1.0] } },
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        cullFace: false,
+      });
+      torusProgram.setBlendFunc(gl.SRC_ALPHA, gl.ONE);
+
+      torus = new Mesh(gl, {
+        mode: gl.LINES,
+        geometry: torusGeometry,
+        program: torusProgram,
+      });
+      torus.rotation.x = 1.15;
+      torus.setParent(scene);
+    }
 
     /* ---------- sizing ---------- */
 
@@ -224,6 +258,7 @@ export default function ParticleField() {
       if (!w || !h) return;
       renderer.setSize(w, h);
       camera.perspective({ aspect: w / h });
+      scene.position.x = variant === "hero" && w >= 1024 ? 1.45 : 0;
     };
     resize();
 
@@ -272,7 +307,7 @@ export default function ParticleField() {
 
       scene.rotation.y = elapsed * 0.12 + current.x * 0.32;
       scene.rotation.x = Math.sin(elapsed * 0.18) * 0.09 - current.y * 0.22;
-      torus.rotation.z = elapsed * 0.08;
+      if (torus) torus.rotation.z = elapsed * 0.08;
 
       renderer.render({ scene, camera });
     };
@@ -315,7 +350,7 @@ export default function ParticleField() {
       canvas.remove();
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, []);
+  }, [variant]);
 
-  return <div ref={hostRef} className="absolute inset-0" aria-hidden="true" />;
+  return <div ref={hostRef} className="absolute inset-0 -z-10" aria-hidden="true" />;
 }

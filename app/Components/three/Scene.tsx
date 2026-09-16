@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import type { SceneVariant } from "./ParticleField";
 
 // Split out of the main bundle entirely — nothing here is fetched until the
 // browser is idle after hydration.
@@ -14,7 +15,7 @@ type NetworkInfo = { saveData?: boolean };
  * defers it until the main thread is free. The hero looks complete without
  * it: the CSS gradient underneath is the fallback.
  */
-export default function Scene() {
+export default function Scene({ variant = "hero" }: { variant?: SceneVariant }) {
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
@@ -40,5 +41,5 @@ export default function Scene() {
   }, []);
 
   if (!enabled) return null;
-  return <ParticleField />;
+  return <ParticleField variant={variant} />;
 }

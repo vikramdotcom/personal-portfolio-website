@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import PageBackdrop from "../Components/three/PageBackdrop";
 import Reveal from "../Components/Reveal";
 import TiltCard from "../Components/TiltCard";
 
@@ -27,6 +28,7 @@ const timeline = [
 export default function AboutPage() {
   return (
     <section className="relative px-5 pb-28 pt-36 sm:px-8">
+      <PageBackdrop />
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(40rem_26rem_at_50%_0%,hsl(var(--violet)/0.12),transparent_70%)]" />
 
       <div className="mx-auto max-w-6xl">

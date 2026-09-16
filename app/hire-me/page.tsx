@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bot, Gauge, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PageBackdrop from "../Components/three/PageBackdrop";
 import Reveal from "../Components/Reveal";
 import TiltCard from "../Components/TiltCard";
 
@@ -30,6 +31,7 @@ const services = [
 export default function HireMePage() {
   return (
     <section className="relative px-5 pb-28 pt-36 sm:px-8">
+      <PageBackdrop />
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(40rem_26rem_at_50%_0%,hsl(var(--cyan)/0.1),transparent_70%)]" />
 
       <div className="mx-auto max-w-6xl">

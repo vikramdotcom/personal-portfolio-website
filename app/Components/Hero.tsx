@@ -32,6 +32,10 @@ export default function Hero() {
       {/* WebGL particle sphere — loaded after hydration, on capable devices */}
       <Scene />
 
+      {/* Scrim over the canvas: keeps the headline readable on the left while
+          the sphere still glows behind the portrait on the right. */}
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(100deg,hsl(var(--background))_6%,hsl(var(--background)/0.55)_30%,transparent_58%)]" />
+
       {/* Gradient floor, drawn over the canvas so the section blends downward */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-64 bg-gradient-to-t from-background to-transparent" />
 
