@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 20% 3%;
+    --foreground: 240 10% 96%;
+    --card: 240 16% 7%;
+    --card-foreground: 240 10% 96%;
+    --popover: 240 16% 7%;
+    --popover-foreground: 240 10% 96%;
+    --primary: 255 92% 68%;
+    --primary-foreground: 240 20% 4%;
+    --secondary: 240 12% 14%;
+    --secondary-foreground: 240 10% 96%;
+    --muted: 240 12% 14%;
+    --muted-foreground: 240 6% 64%;
+    --accent: 188 92% 54%;
+    --accent-foreground: 240 20% 4%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 12% 18%;
+    --input: 240 12% 18%;
+    --ring: 255 92% 68%;
+    --radius: 0.9rem;
+
+    /* Scene accents, shared between CSS and the WebGL shader */
+    --violet: 255 92% 68%;
+    --cyan: 188 92% 54%;
+    --amber: 41 96% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    /* Painted immediately so the WebGL canvas never flashes an empty hero */
+    background-image:
+      radial-gradient(60rem 40rem at 12% -10%, hsl(var(--violet) / 0.18), transparent 60%),
+      radial-gradient(50rem 36rem at 92% 8%, hsl(var(--cyan) / 0.12), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: hsl(var(--violet) / 0.35);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--violet) / 0.6);
+  }
+}
+
+@layer components {
+  /* Frosted panel used by every card on the site */
+  .glass {
+    @apply rounded-2xl border border-white/10 bg-white/[0.04];
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:
+      0 1px 0 0 hsl(0 0% 100% / 0.06) inset,
+      0 24px 60px -30px hsl(240 60% 2% / 0.9);
+  }
+
+  /* Perspective container + inner plate that tilt.js transforms */
+  .tilt-3d {
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  /* Children lift toward the viewer while the plate tilts */
+  .tilt-layer {
+    transform: translateZ(38px);
+    transform-style: preserve-3d;
+  }
+
+  .tilt-layer-sm {
+    transform: translateZ(18px);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      100deg,
+      hsl(var(--violet)),
+      hsl(var(--cyan)) 45%,
+      hsl(var(--amber))
+    );
+  }
+
+  .section-eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Reveal-on-scroll: the class is removed by an IntersectionObserver */
+  .reveal {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+  }
+
+  .reveal-in {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .reveal,
+  .reveal-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
